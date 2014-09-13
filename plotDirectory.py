@@ -17,4 +17,4 @@ def plotDirectory (directory, previousfiles):
             totalstream += stream
             previousfiles += f
     totalstream.plot()
-            
+

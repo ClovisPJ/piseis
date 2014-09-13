@@ -14,7 +14,8 @@ port = serial.Serial(port_name, 9600, timeout=1)
 #block_length=0
 
 #iterator for writing files
-block_id=1
+sample_block_id=1
+jitter_block_id=1
 samplequeue = Queue.Queue()
 jitterqueue = Queue.Queue()
 
@@ -22,14 +23,14 @@ jitterqueue = Queue.Queue()
 def save_data():
 	#it wait as there won't be anything to save in the first 5 seconds
 	time.sleep(5)
-	global block_id
+	global sample_block_id
 	while True:
 		#'if' not essential but wil allow waiting to save processing
 		if not samplequeue.empty():
 			to_save = samplequeue.get()
 			#write block with id from iterator
-			to_save.write('mseed/PHYS' + str(block_id) + '.mseed',format='MSEED')
-			block_id=block_id+1
+			to_save.write('mseed/PHYS' + str(sample_block_id) + '.mseed',format='MSEED')
+			sample_block_id=sample_block_id+1
 			samplequeue.task_done()
 		else:
 			print 'nothing to save...'
@@ -37,22 +38,43 @@ def save_data():
 			time.sleep(5)
 
 
+
+def save_data():
+	#it wait as there won't be anything to save in the first 5 seconds
+	time.sleep(5)
+	global jitter_block_id
+	while True:
+		#'if' not essential but wil allow waiting to save processing
+		if not jitterqueue.empty():
+			to_save = jitterqueue.get()
+			#write block with id from iterator
+			to_save.write('mseed/PHYS' + str(jitter_block_id) + '.mseed',format='MSEED')
+			jitter_block_id=jitter_block_id+1
+			jitterqueue.task_done()
+		else:
+			print 'nothing to save...'
+			#to save processing bit
+			time.sleep(5)
+
+
+
 def read_data(block_length):
 	starttime=UTCDateTime()
 	x=1
 	data=numpy.zeros([block_length],dtype=numpy.int16)
 	jitter=numpy.zeros([block_length],dtype=numpy.int16)
-        firsttime=true
-	
+        firsttime=True
+	totaltime=0
+
 	while (port.isOpen()) and x<block_length:
 		#loop continues for block size
 	        sample = port.readline().strip()
 		data[x]=sample
 		timenow=UTCDateTime()
 		
-                if firsttime==true:
+                if firsttime==True:
 		    starttime=timenow
-		    firsttime=false
+		    firsttime=False
 		else:
                     sample_time=timenow-starttime
                     jitter[x]=sample_time
@@ -70,11 +92,12 @@ def read_data(block_length):
 	st =Stream([Trace(data=data, header=stats)])
         jt =Stream([Trace(data=jitter)])
 	samplequeue.put(st)
+	jitterqueue.put(jt)
 
 for x in range(1):
 	worker = Thread(target=save_data)
 	#worker.Daemon = True
 	worker.start()
 
-for x in range(50):
-	read_data(128)
+for x in range(5):
+	read_data(32)
