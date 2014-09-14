@@ -20,7 +20,7 @@ samplequeue = Queue.Queue()
 jitterqueue = Queue.Queue()
 
 #this is the thread
-def save_data():
+def save_data_sample():
 	#it wait as there won't be anything to save in the first 5 seconds
 	time.sleep(5)
 	global sample_block_id
@@ -39,7 +39,7 @@ def save_data():
 
 
 
-def save_data():
+def save_data_jitter():
 	#it wait as there won't be anything to save in the first 5 seconds
 	time.sleep(5)
 	global jitter_block_id
@@ -48,7 +48,7 @@ def save_data():
 		if not jitterqueue.empty():
 			to_save = jitterqueue.get()
 			#write block with id from iterator
-			to_save.write('mseed/PHYS' + str(jitter_block_id) + '.mseed',format='MSEED')
+			to_save.write('mseed/JTR' + str(jitter_block_id) + '.mseed',format='MSEED')
 			jitter_block_id=jitter_block_id+1
 			jitterqueue.task_done()
 		else:
@@ -65,6 +65,7 @@ def read_data(block_length):
 	jitter=numpy.zeros([block_length],dtype=numpy.int16)
         firsttime=True
 	totaltime=0
+	lastsample=UTCDateTime()
 
 	while (port.isOpen()) and x<block_length:
 		#loop continues for block size
@@ -72,14 +73,11 @@ def read_data(block_length):
 		data[x]=sample
 		timenow=UTCDateTime()
 		
-                if firsttime==True:
-		    starttime=timenow
-		    firsttime=False
-		else:
-                    sample_time=timenow-starttime
-                    jitter[x]=sample_time
-		    totaltime=totaltime+sample_time
+                sample_time=timenow-lastsample
+                jitter[x]=sample_time
+		totaltime=totaltime+sample_time
                 
+		lastsample=timenow
                 x=x+1
                 print sample,timenow
 
@@ -95,9 +93,10 @@ def read_data(block_length):
 	jitterqueue.put(jt)
 
 for x in range(1):
-	worker = Thread(target=save_data)
-	#worker.Daemon = True
-	worker.start()
+	worker_sample = Thread(target=save_data_sample)
+	worker_jitter = Thread(target=save_data_jitter)	
+	worker_sample.start()
+	worker_jitter.start()
 
 for x in range(5):
 	read_data(32)

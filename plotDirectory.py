@@ -18,3 +18,4 @@ def plotDirectory (directory, previousfiles):
             previousfiles += f
     totalstream.plot()
 
+plotDirectory("mseed",[])
