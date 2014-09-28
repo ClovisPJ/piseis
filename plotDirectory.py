@@ -2,20 +2,22 @@ from obspy.core import read
 import os
 checkedfiles = []
 def plotDirectory (directory, previousfiles):
-    isfirst = 0
-    isfirst += 1
+    isfirst = 1 
     for f in os.listdir(directory):
+	
         alreadychecked = False
         for fil in previousfiles:
             if f == fil:
                 alreadychecked = True
-        if not alreadychecked and f.endswith('.mseed') and isfirst == 1:
+        if not alreadychecked and f.startswith("PHYS") and f.endswith('.mseed') and isfirst == 1:
             totalstream = read(directory+'/'+f)
             previousfiles += f
-        elif not alreadychecked and f.endswith('.mseed'):
+	    isfirst+=1
+        elif not alreadychecked and f.endswith('.mseed')and f.startswith("PHYS"):
             stream = read(directory+'/'+f)
             totalstream += stream
             previousfiles += f
+	    isfirst += 1
     totalstream.plot()
 
-plotDirectory("mseed",[])
+plotDirectory("mseed",checkedfiles)
