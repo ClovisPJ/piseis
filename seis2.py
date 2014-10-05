@@ -10,10 +10,10 @@ datapoints = 100
 
 data=numpy.zeros([datapoints],dtype=numpy.int32)
 
-x=1
+x=0
 starttime=UTCDateTime()
 print(starttime)
-while(port.isOpen()) and x<datapoints:
+while (port.isOpen()) and (x<datapoints-1):
 	sample = port.readline().strip()
 	#if sample != '':
 	data[x]=sample
