@@ -5,8 +5,8 @@ import serial
 
 # the original SEP serial port digitser appers as devive /dev/ttyUSB0
 # the new SEP USB digitiser appears as device /dev/ttyACMO
-#port_name = '/dev/ttyACM0'
-port_name = '/dev/ttyUSB0'
+port_name = '/dev/ttyACM0'
+#port_name = '/dev/ttyUSB0'
 
 port = serial.Serial(port_name, 9600, timeout=1)
 
