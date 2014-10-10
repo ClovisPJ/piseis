@@ -10,13 +10,11 @@ def plotDirectory (directory, previousfiles):
             if f == fil:
                 alreadychecked = True
         if not alreadychecked and f.endswith('.mseed') and isfirst == 1:
-            totalstream = read(directory,'/',f)
+            totalstream = read(directory+'/'+f)
             previousfiles += f
         elif not alreadychecked and f.endswith('.mseed'):
-            stream = read(f)
+            stream = read(directory+'/'+f)
             totalstream += stream
             previousfiles += f
     totalstream.plot()
-plotDirectory('/home/pi/OUNDLESEIS/mseed', checkedfiles)
-
             
