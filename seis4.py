@@ -15,7 +15,8 @@ port = serial.Serial(port_name, 9600, timeout=1)
 
 #iterator for writing files
 block_id=1
-q = Queue.Queue()
+samplequeue = Queue.Queue()
+jitterqueue = Queue.Queue()
 
 #this is the thread
 def save_data():
@@ -24,12 +25,12 @@ def save_data():
 	global block_id
 	while True:
 		#'if' not essential but wil allow waiting to save processing
-		if not q.empty():
-			to_save = q.get()
+		if not samplequeue.empty():
+			to_save = samplequeue.get()
 			#write block with id from iterator
 			to_save.write('mseed/PHYS' + str(block_id) + '.mseed',format='MSEED')
 			block_id=block_id+1
-			q.task_done()
+			samplequeue.task_done()
 		else:
 			print 'nothing to save...'
 			#to save processing bit
@@ -40,23 +41,25 @@ def read_data(block_length):
 	starttime=UTCDateTime()
 	x=1
 	data=numpy.zeros([block_length],dtype=numpy.int16)
-	firsttime=true
+	jitter=numpy.zeros([block_length],dtype=numpy.int16)
+        firsttime=true
 	
 	while (port.isOpen()) and x<block_length:
 		#loop continues for block size
 	        sample = port.readline().strip()
 		data[x]=sample
-	       	x=x+1
-		#'timenow' not essential and isn't stored
-		if firsttime=true:
-			starttime=timenow
-			firsttime=false
-		else:
-			totaltime=totaltime+(timenow-starttime)
-
-
 		timenow=UTCDateTime()
-	       	print sample,timenow
+		
+                if firsttime==true:
+		    starttime=timenow
+		    firsttime=false
+		else:
+                    sample_time=timenow-starttime
+                    jitter[x]=sample_time
+		    totaltime=totaltime+sample_time
+                
+                x=x+1
+                print sample,timenow
 
 	avg_samplingrate=totaltime/block_length
 	print avg_samplingrate
@@ -65,7 +68,8 @@ def read_data(block_length):
 	         'mseed': {'dataquality': 'D'},'starttime': starttime}
 	#create strem of data and queue it
 	st =Stream([Trace(data=data, header=stats)])
-	q.put(st)
+        jt =Stream([Trace(data=jitter)])
+	samplequeue.put(st)
 
 for x in range(1):
 	worker = Thread(target=save_data)
