@@ -21,12 +21,12 @@ queue = Queue.Queue()
 def save_data():
 	global block_id
 	while True:
-		if queue.qsize()=block_length:
+		if queue.qsize()>=block_length:
 
 			data=numpy.zeros([block_length],dtype=numpy.int16)
 			jitter=numpy.zeros([block_length],dtype=numpy.int16)
 
-			for x in range 1 to block_length:
+			for x in range (block_length):
 				packet = queue.get()
 				data[x] = packet[1]
 				jitter[x] = packet[2]
