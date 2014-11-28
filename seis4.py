@@ -1,7 +1,6 @@
 import serial
 import numpy
 from obspy.core import read,Trace,Stream,UTCDateTime
-#import hashlib
 import Queue
 from threading import Thread
 import time
@@ -10,93 +9,89 @@ import time
 port_name='/dev/ttyACM0'
 port = serial.Serial(port_name, 9600, timeout=1)
 
-#array of zeros to write data into
-#block_length=0
+#this is how after how many samples a block is saved
+block_length=120
 
 #iterator for writing files
-sample_block_id=1
-jitter_block_id=1
-samplequeue = Queue.Queue()
-jitterqueue = Queue.Queue()
+block_id=0
 
-#this is the thread
-def save_data_sample():
-	#it wait as there won't be anything to save in the first 5 seconds
-	time.sleep(5)
-	global sample_block_id
+#declare the q from library
+queue = Queue.Queue()
+
+def read_data(samples):
+	for x in range (samples):
+       		#this array is for sample & sample_time
+		packet=[0,0]
+
+		while (port.isOpen()):
+	       		sample = port.readline().strip()
+			timenow=UTCDateTime()
+			packet[0]=sample
+			packet[1]=timenow
+
+             		print sample,timenow
+
+			queue.put(packet)
+
+
+
+#this is the worker thread
+def save_data():
+	global block_id
 	while True:
-		#'if' not essential but wil allow waiting to save processing
-		if not samplequeue.empty():
-			to_save = samplequeue.get()
+		#print queue.qsize()
+		if (queue.qsize()>=block_length):
+
+			#two arrays for reading samples & jitter into
+			data=numpy.zeros([block_length],dtype=numpy.int16)
+			jitter=numpy.zeros([block_length],dtype=numpy.int16)
+
+			firsttime=True
+			totaltime=0
+			sample_time = 0
+			
+			for x in range (block_length):
+				packet = queue.get()
+				data[x] = packet[0]
+				
+				#firsttime check is essential to get 'starttime' for mseed header
+       		        	if firsttime == True:
+					starttime=packet[1]
+					firsttime = False
+				else:
+					sample_time=packet[1]
+					sample_difference=sample_time- previous_sample
+
+				jitter[x] = sample_difference
+				
+				#previos_sample is used to get the difference in the next loop
+				previous_sample=packet[1]
+
+				totaltime=totaltime+sample_difference
+				queue.task_done()
+
+	
+			avg_samplingrate=totaltime/block_length
+
+			print avg_samplingrate
+			stats = {'network': 'UK', 'station': 'PHYS', 'location': '00',
+					'channel': 'BHZ', 'npts': block_length, 'sampling_rate': avg_samplingrate, 
+					'mseed': {'dataquality': 'D'},'starttime': starttime}
+			
+			st =Stream([Trace(data=data, header=stats)])
+      			jt =Stream([Trace(data=jitter)])
+			
 			#write block with id from iterator
-			to_save.write('mseed/PHYS' + str(sample_block_id) + '.mseed',format='MSEED')
-			sample_block_id=sample_block_id+1
-			samplequeue.task_done()
-		else:
-			print 'nothing to save...'
-			#to save processing bit
-			time.sleep(5)
+			st.write('mseed/PHYS' + str(block_id) + '.mseed',format='MSEED',encoding='INT16',reclen=512)
+			jt.write('mseed/JTR' + str(block_id) + '.mseed',format='MSEED',encoding='INT16',reclen=512)
+			block_id=block_id+1
 
 
 
-def save_data_jitter():
-	#it wait as there won't be anything to save in the first 5 seconds
-	time.sleep(5)
-	global jitter_block_id
-	while True:
-		#'if' not essential but wil allow waiting to save processing
-		if not jitterqueue.empty():
-			to_save = jitterqueue.get()
-			#write block with id from iterator
-			to_save.write('mseed/JTR' + str(jitter_block_id) + '.mseed',format='MSEED')
-			jitter_block_id=jitter_block_id+1
-			jitterqueue.task_done()
-		else:
-			print 'nothing to save...'
-			#to save processing bit
-			time.sleep(5)
-
-
-
-def read_data(block_length):
-	starttime=UTCDateTime()
-	x=1
-	data=numpy.zeros([block_length],dtype=numpy.int16)
-	jitter=numpy.zeros([block_length],dtype=numpy.int16)
-        firsttime=True
-	totaltime=0
-	lastsample=UTCDateTime()
-
-	while (port.isOpen()) and x<block_length:
-		#loop continues for block size
-	        sample = port.readline().strip()
-		data[x]=sample
-		timenow=UTCDateTime()
-		
-                sample_time=timenow-lastsample
-                jitter[x]=sample_time
-		totaltime=totaltime+sample_time
-                
-		lastsample=timenow
-                x=x+1
-                print sample,timenow
-
-	avg_samplingrate=totaltime/block_length
-	print avg_samplingrate
-	stats = {'network': 'UK', 'station': 'PHYS', 'location': '00',
-	         'channel': 'BHZ', 'npts': block_length, 'sampling_rate': avg_samplingrate, 
-	         'mseed': {'dataquality': 'D'},'starttime': starttime}
-	#create strem of data and queue it
-	st =Stream([Trace(data=data, header=stats)])
-        jt =Stream([Trace(data=jitter)])
-	samplequeue.put(st)
-	jitterqueue.put(jt)
 
 for x in range(1):
-	worker_sample = Thread(target=save_data_sample)
-	worker_jitter = Thread(target=save_data_jitter)	
+	worker_sample = Thread(target=save_data)
 	worker_sample.start()
-	worker_jitter.start()
 
-for x in range(5):
-	read_data(32)
+
+read_data(block_length)

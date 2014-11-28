@@ -15,7 +15,6 @@ starttime=UTCDateTime()
 print(starttime)
 while (port.isOpen()) and (x<datapoints-1):
 	sample = port.readline().strip()
-	#if sample != '':
 	data[x]=sample
 	x=x+1
 	timenow=UTCDateTime()
@@ -33,4 +32,4 @@ stats= {'netwrok': 'UK',
 st =Stream([Trace(data=data, header=stats)])
 
 st.write('test.mseed',format='MSEED',encoding='INT32',reclen=512)
-st.plot()
+#st.plot()
