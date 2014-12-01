@@ -14,6 +14,7 @@ block_length=128
 
 #iterator for writing files
 block_id=1
+x=0
 
 #this is needed for saving in mseed so must be passed globably 
 global starttime
@@ -26,14 +27,15 @@ q = Queue.Queue()
 
 def read_data(block_length):
 	starttime=UTCDateTime()
-	while (port.isOpen()) and x<block_length:
+	while (port.isOpen()) and (x<block_length):
 		
-		#loop continues for block size
+		#loop continues for block length
 	        sample = port.readline().strip()
 		
 		#'timenow' not essential at the moment and isn't stored
 	       	timenow=UTCDateTime()
-	       	print sample,timenow
+	       	print sample,timenow#
+		x=x+1
 		q.put(sample)
 
 

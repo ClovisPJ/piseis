@@ -13,7 +13,7 @@ data=numpy.zeros([datapoints],dtype=numpy.int32)
 x=0
 starttime=UTCDateTime()
 print(starttime)
-while (port.isOpen()) and (x<datapoints-1):
+while (port.isOpen()) and (x<datapoints):
 	sample = port.readline().strip()
 	data[x]=sample
 	x=x+1

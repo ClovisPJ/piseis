@@ -23,15 +23,14 @@ def read_data(samples):
        		#this array is for sample & sample_time
 		packet=[0,0]
 
-		while (port.isOpen()):
-	       		sample = port.readline().strip()
-			timenow=UTCDateTime()
-			packet[0]=sample
-			packet[1]=timenow
+	       	sample = port.readline().strip()
+		timenow=UTCDateTime()
+		packet[0]=sample
+		packet[1]=timenow
 
-             		print sample,timenow
+             	print sample,timenow
 
-			queue.put(packet)
+		queue.put(packet)
 
 
 
