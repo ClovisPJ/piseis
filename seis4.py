@@ -70,7 +70,7 @@ def save_data():
 				queue.task_done()
 
 	
-			avg_samplingrate=totaltime/block_length
+			avg_samplingrate=1/(totaltime/block_length)
 
 			print avg_samplingrate
 			stats = {'network': 'UK', 'station': 'PHYS', 'location': '00',
