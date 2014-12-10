@@ -32,7 +32,7 @@ def read_data(samples):
 		packet[0]=sample
 		packet[1]=timenow
 
-         	#print sample,timenow
+         	print sample,timenow
 
 		queue.put(packet)
 

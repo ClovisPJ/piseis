@@ -72,7 +72,7 @@ def save_data():
 	
 			avg_samplingrate=1/(totaltime/block_length)
 
-			print avg_samplingrate
+			#print avg_samplingrate
 			stats = {'network': 'UK', 'station': 'PHYS', 'location': '00',
 					'channel': 'BHZ', 'npts': block_length, 'sampling_rate': avg_samplingrate, 
 					'mseed': {'dataquality': 'D'},'starttime': starttime}
