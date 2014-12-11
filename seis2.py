@@ -20,7 +20,7 @@ while (port.isOpen()) and (x<datapoints):
 	timenow=UTCDateTime()
 	print sample,timenow
 
-stats= {'netwrok': 'UK',
+stats= {'network': 'UK',
 		'station': 'Test',
 		'location': '00',
 		'channel': 'BHZ',

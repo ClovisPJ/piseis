@@ -6,7 +6,7 @@ import time
 from Adafruit_ADS1x15 import ADS1x15
 
 #this is how after how many samples a block is saved
-block_length=120
+block_length=512
 
 #iterator for writing files
 block_id=0
@@ -15,16 +15,16 @@ block_id=0
 queue = Queue.Queue()
 
 #spec of Adafruit ADS
-sps = 860	#samples per second
+sps = 16	#samples per second
 #pga = 4096	#programmable gain amplifier
 adc = ADS1x15(ic=0x01)	#create class identifing model used
 
 def read_data(samples):
 	
-       	#this array is for sample & sample_time
-	packet=[0,0]
-
 	for x in range (samples):
+       		#this array is for sample & sample_time
+		packet=[0,0]
+
        		sample = adc.readADCDifferential23(256, sps)*1000
 		#sample = adc.readADCSingleEnded(0, pga, sps)	#0mV
 		
@@ -32,7 +32,7 @@ def read_data(samples):
 		packet[0]=sample
 		packet[1]=timenow
 
-         	#print sample,timenow
+         	print sample,timenow
 
 		queue.put(packet)
 
@@ -52,11 +52,11 @@ def save_data():
 			firsttime=True
 			totaltime=0
 			sample_time = 0
+			sample_difference = 0
 			
 			for x in range (block_length):
 				packet = queue.get()
 				data[x] = packet[0]
-				
 				#firsttime check is essential to get 'starttime' for mseed header
        		        	if firsttime == True:
 					starttime=packet[1]
@@ -90,9 +90,8 @@ def save_data():
 
 
 
-for x in range(1):
-	worker_sample = Thread(target=save_data)
-	worker_sample.start()
+worker_sample = Thread(target=save_data)
+worker_sample.start()
 
-
-read_data(block_length)
+for x in range (5):
+	read_data(block_length)

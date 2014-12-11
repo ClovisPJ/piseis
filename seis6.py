@@ -4,9 +4,10 @@ import Queue
 from threading import Thread
 import time
 from Adafruit_ADS1x15 import ADS1x15
+import os
 
 #this is how after how many samples a block is saved
-block_length=120
+block_length=512
 
 #directories for data
 mseed_directory = 'mseed'
@@ -16,16 +17,16 @@ jitter_directory = 'jitter'
 queue = Queue.Queue()
 
 #spec of Adafruit ADS
-sps = 860	#samples per second
+sps = 32	#samples per second
 #pga = 4096	#programmable gain amplifier
 adc = ADS1x15(ic=0x01)	#create class identifing model used
 
 def read_data(samples):
 	
-       	#this array is for sample & sample_time
-	packet=[0,0]
-
 	for x in range (samples):
+       		#this array is for sample & sample_time
+		packet=[0,0]
+
        		sample = adc.readADCDifferential23(256, sps)*1000
 		#sample = adc.readADCSingleEnded(0, pga, sps)	#0mV
 		
@@ -52,6 +53,7 @@ def save_data():
 			firsttime=True
 			totaltime=0
 			sample_time = 0
+			sample_difference = 0
 			
 			for x in range (block_length):
 				packet = queue.get()
@@ -81,26 +83,41 @@ def save_data():
 			
 			sample =Stream([Trace(data=data, header=stats)])
       			jitter =Stream([Trace(data=jitter)])
-			
+			print sample
+
+			MseedExist = False
+			JitterExist = False
+
 			#write sample data 
     			for File in os.listdir(mseed_directory):
-				if File == UTCDateTime.date + '.mseed'
+				if File == (str(UTCDateTime().date) + '.mseed'):
+					MseedExist = True
             				total_stream = read(mseed_directory+'/'+File)
+					#length = os.path.getsize(mseed_directory+'/'+File)
 					total_stream += sample
-					total_stream.write(mseed_directory + UTCDateTime.date + '.mseed',format='MSEED',encoding='INT16',reclen=512)
+					#print total_stream
+					total_stream.write(mseed_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
 			
+			if MseedExist == False:
+				sample.write(mseed_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
+
 			#write jitter data 
     			for File in os.listdir(jitter_directory):
-				if File == UTCDateTime.date + '.mseed'
+				if File == (str(UTCDateTime().date) + '.mseed'):
+					JitterExist = True
             				total_stream = read(jitter_directory+'/'+File)
+					#length = os.path.getsize(jitter_directory+'/'+File)
 					total_stream += jitter
-					total_stream.write(jitter_directory + UTCDateTime.date + '.mseed',format='MSEED',encoding='INT16',reclen=512)
+					#print total_stream
+					total_stream.write(jitter_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
+			
+			if JitterExist == False:
+				jitter.write(jitter_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
 
 
 
-for x in range(1):
-	worker_sample = Thread(target=save_data)
-	worker_sample.start()
+worker_sample = Thread(target=save_data)
+worker_sample.start()
 
-
-read_data(block_length)
+for x in range (5):
+	read_data(block_length)

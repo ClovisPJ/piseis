@@ -34,7 +34,7 @@ def read_data(block_length):
 		
 		#'timenow' not essential at the moment and isn't stored
 	       	timenow=UTCDateTime()
-	       	print sample,timenow#
+	       	print sample,timenow
 		x=x+1
 		q.put(sample)
 
