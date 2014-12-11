@@ -17,13 +17,12 @@ jitter_directory = 'jitter'
 queue = Queue.Queue()
 
 #spec of Adafruit ADS
-sps = 32	#samples per second
+sps = 16	#samples per second
 #pga = 4096	#programmable gain amplifier
 adc = ADS1x15(ic=0x01)	#create class identifing model used
 
-def read_data(samples):
-	
-	for x in range (samples):
+def read_data():
+	while True:
        		#this array is for sample & sample_time
 		packet=[0,0]
 
@@ -83,7 +82,6 @@ def save_data():
 			
 			sample =Stream([Trace(data=data, header=stats)])
       			jitter =Stream([Trace(data=jitter)])
-			print sample
 
 			MseedExist = False
 			JitterExist = False
@@ -93,10 +91,8 @@ def save_data():
 				if File == (str(UTCDateTime().date) + '.mseed'):
 					MseedExist = True
             				total_stream = read(mseed_directory+'/'+File)
-					#length = os.path.getsize(mseed_directory+'/'+File)
 					total_stream += sample
-					#print total_stream
-					total_stream.write(mseed_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
+					total_stream.write(mseed_directory +'/'+ File,format='MSEED',reclen=512)
 			
 			if MseedExist == False:
 				sample.write(mseed_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
@@ -106,10 +102,8 @@ def save_data():
 				if File == (str(UTCDateTime().date) + '.mseed'):
 					JitterExist = True
             				total_stream = read(jitter_directory+'/'+File)
-					#length = os.path.getsize(jitter_directory+'/'+File)
 					total_stream += jitter
-					#print total_stream
-					total_stream.write(jitter_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
+					total_stream.write(jitter_directory +'/'+ File,format='MSEED',reclen=512)
 			
 			if JitterExist == False:
 				jitter.write(jitter_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
@@ -119,5 +113,4 @@ def save_data():
 worker_sample = Thread(target=save_data)
 worker_sample.start()
 
-for x in range (5):
-	read_data(block_length)
+read_data()
