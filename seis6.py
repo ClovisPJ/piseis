@@ -7,7 +7,7 @@ from Adafruit_ADS1x15 import ADS1x15
 import os
 
 #this is how after how many samples a block is saved
-block_length=512
+block_length=224
 
 #directories for data
 mseed_directory = 'mseed'
@@ -91,22 +91,30 @@ def save_data():
 				if File == (str(UTCDateTime().date) + '.mseed'):
 					MseedExist = True
             				total_stream = read(mseed_directory+'/'+File)
+
+					for i in range (total_stream.count()):	
+						total_stream[i].data = total_stream[i].data.astype(numpy.int16)
+					
 					total_stream += sample
-					total_stream.write(mseed_directory +'/'+ File,format='MSEED',reclen=512)
+					total_stream.write(mseed_directory +'/'+ File,format='MSEED',encoding=1,reclen=512)
 			
 			if MseedExist == False:
-				sample.write(mseed_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
+				sample.write(mseed_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',encoding=1,reclen=512)
 
 			#write jitter data 
     			for File in os.listdir(jitter_directory):
 				if File == (str(UTCDateTime().date) + '.mseed'):
 					JitterExist = True
             				total_stream = read(jitter_directory+'/'+File)
+					
+					for i in range (total_stream.count()):	
+						total_stream[i].data = total_stream[i].data.astype(numpy.int16)
+					
 					total_stream += jitter
-					total_stream.write(jitter_directory +'/'+ File,format='MSEED',reclen=512)
+					total_stream.write(jitter_directory +'/'+ File,format='MSEED',encoding=1,reclen=512)
 			
 			if JitterExist == False:
-				jitter.write(jitter_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',reclen=512)
+				jitter.write(jitter_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',encoding=1,reclen=512)
 
 
 
