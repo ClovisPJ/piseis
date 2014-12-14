@@ -3,28 +3,15 @@ from obspy.core import Trace,Stream,UTCDateTime
 import Queue
 from threading import Thread
 
-if input_type == 'A':
+from Adafruit_ADS1x15 import ADS1x15
+sps = 16        #samples per second
+adc = ADS1x15(ic=0x01)  #create class identifing model used
 
-        from Adafruit_ADS1x15 import ADS1x15
-        sps = 16        #samples per second
-        #pga = 4096     #programmable gain amplifier
-        adc = ADS1x15(ic=0x01)  #create class identifing model used
-
-        def read():
-                return adc.readADCDifferential23(256, sps)*1000
-elif input_type == 'D':
-
-        import serial
-        port_name = '/dev/ttyACM0'
-        port = serial.Serial(port_name, 9600, timeout=1)
-
-        def read():
-                return port.readline().strip()
-else:
-        sys.exit("Incorrect ADS type")
+def read():
+	return adc.readADCDifferential23(256, sps)*1000
 
 #this is how after how many samples a block is saved
-block_length=120
+block_length=128
 
 #iterator for writing files
 block_id=0
