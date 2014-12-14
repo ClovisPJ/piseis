@@ -8,9 +8,6 @@ from Adafruit_ADS1x15 import ADS1x15
 sps = 16        #samples per second
 adc = ADS1x15(ic=0x01)  #create class identifing model used
 
-def read():
-	return adc.readADCDifferential23(256, sps)*1000
-
 #this is how after how many samples a block is saved
 block_length=224
 
@@ -26,7 +23,7 @@ def read_data():
        		#this array is for sample & sample_time
 		packet=[0,0]
 
-       		sample = read()
+       		sample = adc.readADCDifferential23(256, sps)*1000
 		
 		timenow=UTCDateTime()
 		packet[0]=sample
