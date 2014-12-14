@@ -1,19 +1,34 @@
-import serial
 import numpy
-from obspy.core import read,Trace,Stream,UTCDateTime
+from obspy.core import Trace,Stream,UTCDateTime
 import Queue
 from threading import Thread
-import time
 
-#serial input spec
-port_name='/dev/ttyACM0'
-port = serial.Serial(port_name, 9600, timeout=1)
+if input_type == 'A':
+
+        from Adafruit_ADS1x15 import ADS1x15
+        sps = 16        #samples per second
+        #pga = 4096     #programmable gain amplifier
+        adc = ADS1x15(ic=0x01)  #create class identifing model used
+
+        def read():
+                return adc.readADCDifferential23(256, sps)*1000
+elif input_type == 'D':
+
+        import serial
+        port_name = '/dev/ttyACM0'
+        port = serial.Serial(port_name, 9600, timeout=1)
+
+        def read():
+                return port.readline().strip()
+else:
+        sys.exit("Incorrect ADS type")
 
 #number of samples in each mseed file
 block_length=128
 
 #iterator for writing files
-block_id=1
+block_id=0
+
 x=0
 
 #this is needed for saving in mseed so must be passed globably 
@@ -27,10 +42,10 @@ q = Queue.Queue()
 
 def read_data(block_length):
 	starttime=UTCDateTime()
-	while (port.isOpen()) and (x<block_length):
+	while x<block_length:
 		
 		#loop continues for block length
-	        sample = port.readline().strip()
+	        sample = read()
 		
 		#'timenow' not essential at the moment and isn't stored
 	       	timenow=UTCDateTime()
@@ -63,9 +78,8 @@ def save_data():
 
 
 
-for x in range(1):
-	worker = Thread(target=save_data)
-	worker.start()
+worker = Thread(target=save_data)
+worker.start()
 
-for x in range(50):
+for x in range(5):
 	read_data(block_length)

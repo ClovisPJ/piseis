@@ -1,38 +1,51 @@
 import numpy
-from obspy.core import read,Trace,Stream,UTCDateTime
+from obspy.core import Trace,Stream,UTCDateTime
 import Queue
 from threading import Thread
-import time
-from Adafruit_ADS1x15 import ADS1x15
+import os
+
+if input_type == 'A':
+
+        from Adafruit_ADS1x15 import ADS1x15
+        sps = 16        #samples per second
+        #pga = 4096     #programmable gain amplifier
+        adc = ADS1x15(ic=0x01)  #create class identifing model used
+
+        def read():
+                return adc.readADCDifferential23(256, sps)*1000
+elif input_type == 'D':
+
+        import serial
+        port_name = '/dev/ttyACM0'
+        port = serial.Serial(port_name, 9600, timeout=1)
+
+        def read():
+                return port.readline().strip()
+else:
+        sys.exit("Incorrect ADS type")
 
 #this is how after how many samples a block is saved
-block_length=512
+block_length=224
 
-#iterator for writing files
-block_id=0
+#directories for data
+mseed_directory = 'mseed'
+jitter_directory = 'jitter'
 
 #declare the q from library
 queue = Queue.Queue()
 
-#spec of Adafruit ADS
-sps = 16	#samples per second
-#pga = 4096	#programmable gain amplifier
-adc = ADS1x15(ic=0x01)	#create class identifing model used
-
-def read_data(samples):
-	
-	for x in range (samples):
+def read_data():
+	while True:
        		#this array is for sample & sample_time
 		packet=[0,0]
 
-       		sample = adc.readADCDifferential23(256, sps)*1000
-		#sample = adc.readADCSingleEnded(0, pga, sps)	#0mV
+       		sample = read()
 		
 		timenow=UTCDateTime()
 		packet[0]=sample
 		packet[1]=timenow
 
-         	print sample,timenow
+         	#print sample,timenow
 
 		queue.put(packet)
 
@@ -40,7 +53,6 @@ def read_data(samples):
 
 #this is the worker thread
 def save_data():
-	global block_id
 	while True:
 		#print queue.qsize()
 		if (queue.qsize()>=block_length):
@@ -57,6 +69,7 @@ def save_data():
 			for x in range (block_length):
 				packet = queue.get()
 				data[x] = packet[0]
+				
 				#firsttime check is essential to get 'starttime' for mseed header
        		        	if firsttime == True:
 					starttime=packet[1]
@@ -79,19 +92,45 @@ def save_data():
 					'channel': 'BHZ', 'npts': block_length, 'sampling_rate': avg_samplingrate, 
 					'mseed': {'dataquality': 'D'},'starttime': starttime}
 			
-			st =Stream([Trace(data=data, header=stats)])
-      			jt =Stream([Trace(data=jitter)])
-			
-			#write block with id from iterator
-			st.write('mseed/PHYS' + str(block_id) + '.mseed',format='MSEED',encoding='INT16',reclen=512)
-			jt.write('mseed/JTR' + str(block_id) + '.mseed',format='MSEED',encoding='INT16',reclen=512)
-			block_id=block_id+1
+			sample =Stream([Trace(data=data, header=stats)])
+      			jitter =Stream([Trace(data=jitter)])
 
+			MseedExist = False
+			JitterExist = False
+
+			#write sample data 
+    			for File in os.listdir(mseed_directory):
+				if File == (str(UTCDateTime().date) + '.mseed'):
+					MseedExist = True
+            				total_stream = read(mseed_directory+'/'+File)
+
+					for i in range (total_stream.count()):	
+						total_stream[i].data = total_stream[i].data.astype(numpy.int16)
+					
+					total_stream += sample
+					total_stream.write(mseed_directory +'/'+ File,format='MSEED',encoding=1,reclen=512)
+			
+			if MseedExist == False:
+				sample.write(mseed_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',encoding=1,reclen=512)
+
+			#write jitter data 
+    			for File in os.listdir(jitter_directory):
+				if File == (str(UTCDateTime().date) + '.mseed'):
+					JitterExist = True
+            				total_stream = read(jitter_directory+'/'+File)
+					
+					for i in range (total_stream.count()):	
+						total_stream[i].data = total_stream[i].data.astype(numpy.int16)
+					
+					total_stream += jitter
+					total_stream.write(jitter_directory +'/'+ File,format='MSEED',encoding=1,reclen=512)
+			
+			if JitterExist == False:
+				jitter.write(jitter_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',encoding=1,reclen=512)
 
 
 
 worker_sample = Thread(target=save_data)
 worker_sample.start()
 
-for x in range (5):
-	read_data(block_length)
+read_data()
