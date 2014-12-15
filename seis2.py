@@ -5,17 +5,15 @@ from Adafruit_ADS1x15 import ADS1x15
 sps = 16        #samples per second
 adc = ADS1x15(ic=0x01)  #create class identifing model used
 
+data=numpy.zeros([datapoints],dtype=numpy.int16)
+
 datapoints = 100
 
-data=numpy.zeros([datapoints],dtype=numpy.int32)
-
-x=0
 starttime=UTCDateTime()
-print(starttime)
-while (port.isOpen()) and (x<datapoints):
+
+for x in range (datapoints):
 	sample = adc.readADCDifferential23(256, sps)*1000
 	data[x]=sample
-	x=x+1
 	timenow=UTCDateTime()
 	print sample,timenow
 
@@ -28,6 +26,6 @@ stats= {'network': 'UK',
 		'mseed' : {'dataquality' : 'D'},
 		'starttime': starttime}
 
-st =Stream([Trace(data=data, header=stats)])
+stream =Stream([Trace(data=data, header=stats)])
 
-st.write('test.mseed',format='MSEED',encoding='INT32',reclen=512)
+stream.write('test.mseed',format='MSEED',encoding='INT16',reclen=512)
