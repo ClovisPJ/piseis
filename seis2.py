@@ -18,7 +18,7 @@ for x in range (datapoints):
 	print sample,timenow
 
 stats= {'network': 'UK',
-		'station': 'Test',
+		'station': 'RASPI',
 		'location': '00',
 		'channel': 'BHZ',
 		'npts': datapoints,

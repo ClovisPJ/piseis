@@ -43,7 +43,7 @@ def save_data():
 
 			#two arrays for reading samples & jitter into
 			data=numpy.zeros([block_length],dtype=numpy.int16)
-			jitter=numpy.zeros([block_length],dtype=numpy.int16)
+			jitter=numpy.zeros([block_length],dtype=numpy.float32)
 
 			firsttime=True
 			totaltime=0
@@ -62,7 +62,7 @@ def save_data():
 					sample_time=packet[1]
 					sample_difference=sample_time- previous_sample
 
-				jitter[x] = sample_difference
+				jitter[x] = sample_difference - sps
 				
 				#previos_sample is used to get the difference in the next loop
 				previous_sample=packet[1]
@@ -76,8 +76,8 @@ def save_data():
 					'channel': 'BHZ', 'npts': block_length, 'sampling_rate': avg_samplingrate, 
 					'mseed': {'dataquality': 'D'},'starttime': starttime}
 			
-			sample =Stream([Trace(data=data, header=stats)])
-      			jitter =Stream([Trace(data=jitter)])
+			sample_stream =Stream([Trace(data=data, header=stats)])
+      			jitter_stream =Stream([Trace(data=jitter)])
 
 			MseedExist = False
 			JitterExist = False
@@ -91,11 +91,11 @@ def save_data():
 					for i in range (total_stream.count()):	
 						total_stream[i].data = total_stream[i].data.astype(numpy.int16)
 					
-					total_stream += sample
-					total_stream.write(mseed_directory +'/'+ File,format='MSEED',encoding=1,reclen=512)
+					total_stream += sample_stream
+					total_stream.write(mseed_directory +'/'+ File,format='MSEED',encoding='INT16',reclen=512)
 			
 			if MseedExist == False:
-				sample.write(mseed_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',encoding=1,reclen=512)
+				sample_stream.write(mseed_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',encoding='INT16',reclen=512)
 
 			#write jitter data 
     			for File in os.listdir(jitter_directory):
@@ -106,11 +106,11 @@ def save_data():
 					for i in range (total_stream.count()):	
 						total_stream[i].data = total_stream[i].data.astype(numpy.int16)
 					
-					total_stream += jitter
-					total_stream.write(jitter_directory +'/'+ File,format='MSEED',encoding=1,reclen=512)
+					total_stream += jitter_stream
+					total_stream.write(jitter_directory +'/'+ File,format='MSEED',encoding='FLOAT32',reclen=512)
 			
 			if JitterExist == False:
-				jitter.write(jitter_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',encoding=1,reclen=512)
+				jitter_stream.write(jitter_directory +'/'+ str(UTCDateTime().date) + '.mseed',format='MSEED',encoding='FLOAT32',reclen=512)
 
 
 
