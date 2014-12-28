@@ -7,7 +7,7 @@ adc = ADS1x15(ic=0x01)  #create class identifing model used
 
 data=numpy.zeros([datapoints],dtype=numpy.int16)
 
-datapoints = 100
+datapoints = 128
 
 starttime=UTCDateTime()
 

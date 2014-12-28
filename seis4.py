@@ -26,6 +26,7 @@ def read_data(block_length):
 		packet[1]=timenow
 
 		print sample,timenow
+		
 		queue.put(packet)
 
 
