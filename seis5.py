@@ -1,5 +1,5 @@
 import numpy
-from obspy.core import Trace,Stream,UTCDateTime
+from obspy.core import read,Trace,Stream,UTCDateTime
 import Queue
 from threading import Thread
 import os.path
@@ -29,7 +29,7 @@ def read_data():
 		packet[0]=sample
 		packet[1]=timenow
 
-		#print sample,timenow
+		print sample,timenow
 
 		queue.put(packet)
 
@@ -101,17 +101,17 @@ def save_data():
 
 
 			#write jitter data
-			File = jitter_directory + '/' + str(jitter_stream[0].stats.starttime.date) + '.mseed'
-			if os.path.isfile(File):
-				total_stream = read(File)
+			#File = jitter_directory + '/' + str(jitter_stream[0].stats.starttime.date) + '.mseed'
+			#if os.path.isfile(File):
+			#	total_stream = read(File)
 
-				for i in range (total_stream.count()):	
-					total_stream[i].data = total_stream[i].data.astype(numpy.int16)
+			#	for i in range (total_stream.count()):	
+			#		total_stream[i].data = total_stream[i].data.astype(numpy.int16)
 					
-				total_stream += jitter_stream
-				total_stream.write(File,format='MSEED',encoding='FLOAT32',reclen=512)
-			else:
-				jitter_stream.write(File,format='MSEED',encoding='FLOAT32',reclen=512)
+			#	total_stream += jitter_stream
+			#	total_stream.write(File,format='MSEED',encoding='FLOAT32',reclen=512)
+			#else:
+			#	jitter_stream.write(File,format='MSEED',encoding='FLOAT32',reclen=512)
 
 
 
