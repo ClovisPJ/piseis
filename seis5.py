@@ -12,8 +12,8 @@ adc = ADS1x15(ic=0x01)  #create class identifing model used
 block_length=224
 
 #directories for data
-mseed_directory = 'mseed'
-jitter_directory = 'jitter'
+mseed_directory = '/home/pi/piseis/mseed'
+jitter_directory = '/home/pi/piseis/jitter'
 
 #declare the q from library
 queue = Queue.Queue()
@@ -29,7 +29,7 @@ def read_data():
 		packet[0]=sample
 		packet[1]=timenow
 
-		print sample,timenow
+		#print sample,timenow
 
 		queue.put(packet)
 
