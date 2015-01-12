@@ -3,6 +3,7 @@ from obspy.core import read,Trace,Stream,UTCDateTime
 import Queue
 from threading import Thread
 import os.path
+import subprocess
 
 from Adafruit_ADS1x15 import ADS1x15
 sps = 16        #samples per second
@@ -86,32 +87,42 @@ def save_data():
 
 			#write sample data
 			File = mseed_directory + '/' + str(sample_stream[0].stats.starttime.date) + '.mseed'
+			temp_file_int = 0
+			temp_file = str(".temp"+temp_file_int+".tmp")
+			
+			#loop checks filename doesn't exist already. Only necessary if multithreading
+			while os.path.isfile(tempfile):
+				temp_file_int += 1
+			temp_file = str(".temp"+temp_file_int+".tmp")
+			
 			if os.path.isfile(File):
-				total_stream = read(File)
-
-				#as when the data is read it is not in the correct format
-				for i in range (total_stream.count()):	
-					total_stream[i].data = total_stream[i].data.astype(numpy.int16)
-
-				total_stream += sample_stream
-				total_stream.write(File,format='MSEED',encoding='INT16',reclen=512)
+				#writes temp file, then merges it with the whole file, then removes file after
+				sample_stream.write(temp_file,format='MSEED',encoding='INT16',reclen=512)
+				subprocess.call(["cat",File,temp_file,">",File])
+				subprocess.call(["rm",temp_file])
 			else:
-			#if this is the first block
+			#if this is the first block of day
 				sample_stream.write(File,format='MSEED',encoding='INT16',reclen=512)
 
-
+			
 			#write jitter data
-			#File = jitter_directory + '/' + str(jitter_stream[0].stats.starttime.date) + '.mseed'
-			#if os.path.isfile(File):
-			#	total_stream = read(File)
-
-			#	for i in range (total_stream.count()):	
-			#		total_stream[i].data = total_stream[i].data.astype(numpy.int16)
-					
-			#	total_stream += jitter_stream
-			#	total_stream.write(File,format='MSEED',encoding='FLOAT32',reclen=512)
-			#else:
-			#	jitter_stream.write(File,format='MSEED',encoding='FLOAT32',reclen=512)
+			File = jitter_directory + '/' + str(jitter_stream[0].stats.starttime.date) + '.mseed'
+			temp_file_int = 0
+			temp_file = str(".temp"+temp_file_int+".tmp")
+			
+			#loop checks filename doesn't exist already. Only necessary if multithreading
+			while os.path.isfile(tempfile):
+				temp_file_int += 1
+			temp_file = str(".temp"+temp_file_int+".tmp")
+			
+			if os.path.isfile(File):
+				#writes temp file, then merges it with the whole file, then removes file after
+				jitter_stream.write(temp_file,format='MSEED',encoding='FLOAT32',reclen=512)
+				subprocess.call(["cat",File,temp_file,">",File])
+				subprocess.call(["rm",temp_file])
+			else:
+			#if this is the first block of day
+				jitter_stream.write(File,format='MSEED',encoding='FLOAT32',reclen=512)
 
 
 
