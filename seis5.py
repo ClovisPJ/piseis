@@ -13,8 +13,8 @@ adc = ADS1x15(ic=0x01)  #create class identifing model used
 block_length=224
 
 #directories for data
-mseed_directory = '/home/pi/piseis/mseed'
-jitter_directory = '/home/pi/piseis/jitter'
+mseed_directory = '/home/pi/piseis/mseed/'
+jitter_directory = '/home/pi/piseis/jitter/'
 
 #declare the q from library
 queue = Queue.Queue()
@@ -86,19 +86,19 @@ def save_data():
 			jitter_stream =Stream([Trace(data=jitter)])
 
 			#write sample data
-			File = mseed_directory + '/' + str(sample_stream[0].stats.starttime.date) + '.mseed'
+			File = mseed_directory + str(sample_stream[0].stats.starttime.date) + '.mseed'
 			temp_file_int = 0
-			temp_file = str(".temp"+temp_file_int+".tmp")
+			temp_file = mseed_directory + ".temp" + str(temp_file_int) + ".tmp"
 			
 			#loop checks filename doesn't exist already. Only necessary if multithreading
-			while os.path.isfile(tempfile):
+			while os.path.isfile(temp_file):
 				temp_file_int += 1
-			temp_file = str(".temp"+temp_file_int+".tmp")
-			
+			temp_file = mseed_directory + ".temp" + str(temp_file_int) + ".tmp"
+
 			if os.path.isfile(File):
 				#writes temp file, then merges it with the whole file, then removes file after
 				sample_stream.write(temp_file,format='MSEED',encoding='INT16',reclen=512)
-				subprocess.call(["cat",File,temp_file,">",File])
+				subprocess.call("cat "+temp_file+" >> "+File,shell=True)
 				subprocess.call(["rm",temp_file])
 			else:
 			#if this is the first block of day
@@ -106,19 +106,19 @@ def save_data():
 
 			
 			#write jitter data
-			File = jitter_directory + '/' + str(jitter_stream[0].stats.starttime.date) + '.mseed'
+			File = jitter_directory + str(jitter_stream[0].stats.starttime.date) + '.mseed'
 			temp_file_int = 0
-			temp_file = str(".temp"+temp_file_int+".tmp")
+			temp_file = jitter_directory + ".temp" + str(temp_file_int) + ".tmp"
 			
 			#loop checks filename doesn't exist already. Only necessary if multithreading
-			while os.path.isfile(tempfile):
+			while os.path.isfile(temp_file):
 				temp_file_int += 1
-			temp_file = str(".temp"+temp_file_int+".tmp")
+			temp_file = jitter_directory + ".temp" + str(temp_file_int) + ".tmp"
 			
 			if os.path.isfile(File):
-				#writes temp file, then merges it with the whole file, then removes file after
+				writes temp file, then merges it with the whole file, then removes file after
 				jitter_stream.write(temp_file,format='MSEED',encoding='FLOAT32',reclen=512)
-				subprocess.call(["cat",File,temp_file,">",File])
+				subprocess.call("cat "+temp_file+" >> "+File,shell=True)
 				subprocess.call(["rm",temp_file])
 			else:
 			#if this is the first block of day
