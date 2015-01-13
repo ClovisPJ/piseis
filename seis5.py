@@ -87,14 +87,8 @@ def save_data():
 
 			#write sample data
 			File = mseed_directory + str(sample_stream[0].stats.starttime.date) + '.mseed'
-			temp_file_int = 0
-			temp_file = mseed_directory + ".temp" + str(temp_file_int) + ".tmp"
+			temp_file = mseed_directory + ".temp.tmp"
 			
-			#loop checks filename doesn't exist already. Only necessary if multithreading
-			while os.path.isfile(temp_file):
-				temp_file_int += 1
-			temp_file = mseed_directory + ".temp" + str(temp_file_int) + ".tmp"
-
 			if os.path.isfile(File):
 				#writes temp file, then merges it with the whole file, then removes file after
 				sample_stream.write(temp_file,format='MSEED',encoding='INT16',reclen=512)
@@ -107,16 +101,10 @@ def save_data():
 			
 			#write jitter data
 			File = jitter_directory + str(jitter_stream[0].stats.starttime.date) + '.mseed'
-			temp_file_int = 0
-			temp_file = jitter_directory + ".temp" + str(temp_file_int) + ".tmp"
-			
-			#loop checks filename doesn't exist already. Only necessary if multithreading
-			while os.path.isfile(temp_file):
-				temp_file_int += 1
-			temp_file = jitter_directory + ".temp" + str(temp_file_int) + ".tmp"
+			temp_file = jitter_directory + ".temp.tmp"
 			
 			if os.path.isfile(File):
-				writes temp file, then merges it with the whole file, then removes file after
+				#writes temp file, then merges it with the whole file, then removes file after
 				jitter_stream.write(temp_file,format='MSEED',encoding='FLOAT32',reclen=512)
 				subprocess.call("cat "+temp_file+" >> "+File,shell=True)
 				subprocess.call(["rm",temp_file])
