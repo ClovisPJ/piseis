@@ -8,6 +8,7 @@ import subprocess
 from Adafruit_ADS1x15 import ADS1x15
 sps = 16        #samples per second
 adc = ADS1x15(ic=0x01)  #create class identifing model used
+smoothing = 2	#this controls how much the values are smoothed, 1 is none , >1 is more smoothing
 
 #this is how after how many samples a block is saved
 block_length=224
@@ -27,7 +28,10 @@ def read_data():
 		sample = adc.readADCDifferential23(256, sps)*1000
 		timenow=UTCDateTime()
 		
-		packet[0]=sample
+		#this smooths the value, removing high freq
+		value += (sample - value ) / smoothing
+
+		packet[0]=value
 		packet[1]=timenow
 
 		#print sample,timenow
