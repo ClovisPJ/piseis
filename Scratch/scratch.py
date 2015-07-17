@@ -15,7 +15,8 @@ scratchSock.connect((HOST, PORT))
 
 #function to send data through connection to scratch
 def sendScratchCommand(cmd):
-    #this array is for the length of message in hex (max length: 4 bytes)
+    #this array contains the length of message in letters, each char num representing 8 bits of length. 'c' at beginning message handler
+    #read more about protocol here: http://wiki.scratch.mit.edu/wiki/Remote_Sensors_Protocol
     n = len(cmd)
     a = array('c')
     a.append(chr((n >> 24) & 0xFF))
